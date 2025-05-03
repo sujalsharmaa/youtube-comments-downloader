@@ -71,7 +71,7 @@ export default function Home() {
       setIsLoading(true);
       toast.loading("Fetching comments...");
 
-      const response = await axios.post("https://6hb2lovzx6.execute-api.us-east-1.amazonaws.com/Prod/fetch-comments", {
+      const response = await axios.post(process.env.COMMENTS_URL as string, {
         video_id: videoId,
         email: session?.user.email
       });
@@ -127,13 +127,13 @@ export default function Home() {
   
       // Create a form
       const form = document.createElement("form");
-      form.action = "https://checkout.razorpay.com/v1/payment-button.js";
+      form.action = process.env.RAZORPAY_SRC as string;
       form.method = "post";
   
       // Create script tag inside the form
       const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/payment-button.js";
-      script.setAttribute("data-payment_button_id", "pl_Q5KpbAz1ebleF7");
+      script.src = process.env.RAZORPAY_SRC as string;
+      script.setAttribute("data-payment_button_id", process.env.RAZORPAY_BUTTON_ID as string);
       script.async = true;
   
       form.appendChild(script);

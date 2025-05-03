@@ -26,7 +26,7 @@ export const authOptions: NextAuthOptions = {
       if (account && user) {
         try {
           const res = await axios.post(
-            "https://6hb2lovzx6.execute-api.us-east-1.amazonaws.com/Prod/auth",
+            process.env.AUTH_URL as string,
             {
               name: user.name,
               email: user.email,
