@@ -1,0 +1,251 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: YouTube Comments Downloader App
+
+Globals:
+  Function:
+    Timeout: 850
+    MemorySize: 512
+    Runtime: python3.12
+
+Resources:
+  CommentsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub youtube-comments-bucket-${AWS::AccountId}-new
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireAfter7Days
+            Status: Enabled
+            ExpirationInDays: 7
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - http://localhost:3000
+              - https://comments.sujalsharma.in
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              - HEAD
+            AllowedHeaders:
+              - "*"
+            MaxAge: 3000
+
+
+  MetadataTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: video_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: video_id
+          KeyType: HASH
+
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: email
+          KeyType: HASH
+
+  MyApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: YoutubeCommentsAPI
+      StageName: Prod
+      Cors:
+        AllowMethods: "'POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'http://localhost:3000,https://comments.sujalsharma.in'"
+
+
+  AuthenticationFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AuthenticationFunctionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:GetItem
+                Resource: !GetAtt UsersTable.Arn
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+
+  BackgroundProcessorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BackgroundProcessorPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: !Sub arn:aws:s3:::${CommentsBucket}/*
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:GetItem
+                Resource:
+                  - !GetAtt MetadataTable.Arn
+                  - !GetAtt UsersTable.Arn
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+
+  DownloaderFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DownloaderInlinePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                Resource:
+                  - !GetAtt MetadataTable.Arn
+                  - !GetAtt UsersTable.Arn
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                Resource: !Sub arn:aws:s3:::${CommentsBucket}/*
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+
+  BackgroundProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: BackgroundProcessorFunction
+      Handler: background.lambda_handler
+      CodeUri: .
+      Role: !GetAtt BackgroundProcessorRole.Arn
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref CommentsBucket
+          TABLE_NAME: !Ref MetadataTable
+          TABLE_NAME_USERS: !Ref UsersTable
+
+  YoutubeDownloaderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: YoutubeCommentsDownloader
+      Handler: app.lambda_handler
+      CodeUri: .
+      Role: !GetAtt DownloaderFunctionRole.Arn
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref CommentsBucket
+          TABLE_NAME: !Ref MetadataTable
+          TABLE_NAME_USERS: !Ref UsersTable
+          BACKGROUND_FUNCTION_NAME: !Ref BackgroundProcessorFunction
+          YOUTUBE_API_KEY: insert_your_api_keys_here
+      Events:
+        ApiTrigger:
+          Type: Api
+          Properties:
+            Path: /fetch-comments
+            Method: post
+            RestApiId: !Ref MyApi
+
+  AuthenticationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: AuthenticationFunction
+      Handler: save_user.lambda_handler
+      CodeUri: .
+      Role: !GetAtt AuthenticationFunctionRole.Arn
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref CommentsBucket
+          TABLE_NAME: !Ref UsersTable
+      Events:
+        ApiTrigger:
+          Type: Api
+          Properties:
+            Path: /auth
+            Method: post
+            RestApiId: !Ref MyApi
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/Prod
+
+  DownloaderFunction:
+    Description: Main function to trigger YouTube comments fetch
+    Value: !Ref YoutubeDownloaderFunction
+
+  BackgroundFunction:
+    Description: Background processor function
+    Value: !Ref BackgroundProcessorFunction
+
+  AuthFunction:
+    Description: Authentication function
+    Value: !Ref AuthenticationFunction
+
+  S3Bucket:
+    Description: S3 bucket for storing YouTube comments
+    Value: !Ref CommentsBucket
+
+  MetadataTable:
+    Description: DynamoDB table for storing video metadata
+    Value: !Ref MetadataTable
+
+  UsersTable:
+    Description: DynamoDB table for storing users
+    Value: !Ref UsersTable
