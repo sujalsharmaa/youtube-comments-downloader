@@ -45,6 +45,7 @@ export default function Home() {
   useEffect(() => {
     if (session?.user?.credits !== undefined) {
       setCredits(session.user.credits);
+      console.log(process.env.COMMENTS_URL as string)
     }
   }, [session, setCredits]);
 
