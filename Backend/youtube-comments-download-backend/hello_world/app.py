@@ -34,6 +34,7 @@ def check_video_in_db(video_id: str, api_key: str, email: str) -> dict:
     
     if "Item" in response:
         credits_response = table_users.get_item(Key={"email": email})
+        print(credits_response)
         return {
             "Query": "success",
             "response": response["Item"],
@@ -57,7 +58,7 @@ def build_response(status_code: int, body: dict) -> dict:
             "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
             "Access-Control-Allow-Headers": "Content-Type"
         },
-        "body": json.dumps(body)
+        "body": json.dumps(body, default=str)
     }
 
 def lambda_handler(event, context):

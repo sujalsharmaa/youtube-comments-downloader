@@ -63,7 +63,7 @@ Resources:
       Cors:
         AllowMethods: "'POST,OPTIONS'"
         AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-        AllowOrigin: "'http://localhost:3000,https://comments.sujalsharma.in'"
+        AllowOrigin: "'https://comments.sujalsharma.in'"
 
 
   AuthenticationFunctionRole:
@@ -193,7 +193,7 @@ Resources:
           TABLE_NAME: !Ref MetadataTable
           TABLE_NAME_USERS: !Ref UsersTable
           BACKGROUND_FUNCTION_NAME: !Ref BackgroundProcessorFunction
-          YOUTUBE_API_KEY: insert_your_api_keys_here
+          YOUTUBE_API_KEY: AIzaSyAvRLJ6_m_AqPVMg84cULH-n0QhLjGeYrM
       Events:
         ApiTrigger:
           Type: Api

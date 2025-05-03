@@ -71,7 +71,7 @@ export default function Home() {
       setIsLoading(true);
       toast.loading("Fetching comments...");
 
-      const response = await axios.post("https://6hb2lovzx6.execute-api.us-east-1.amazonaws.com/Prod/fetch-comments", {
+      const response = await axios.post(process.env.NEXT_COMMENTS_URL as string, {
         video_id: videoId,
         email: session?.user.email
       });
