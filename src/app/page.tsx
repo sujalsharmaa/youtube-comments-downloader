@@ -20,7 +20,7 @@ export default function Home() {
 
   const [videoUrl, setVideoUrl] = useState("");
   const [format, setFormat] = useState("csv");
-  const [time, setTime] = useState("");
+// const [time, setTime] = useState("");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [downloadReady, setDownloadReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,7 +51,6 @@ export default function Home() {
   useEffect(() => {
     setCountdown(null);
     setDownloadReady(false);
-    setTime("");
   }, [videoUrl, format]);
 
   const extractYouTubeID = (url: string) => {
@@ -106,13 +105,10 @@ export default function Home() {
         setCountdown(seconds);
         setDownloadReady(false);
         toast("Preparing download link. Please don't refresh...", { icon: "⏳" });
-      } else {
-        setTime("Download link not ready yet.");
-      }
+      } 
     } catch (error) {
       console.error("Download failed:", error);
       toast.error(`Failed to fetch comments. Please try again.${error}`);
-      setTime("Error fetching comments. Please try again.");
     } finally {
       setIsLoading(false);
     }

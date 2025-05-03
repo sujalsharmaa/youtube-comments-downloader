@@ -17,7 +17,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async signIn({ user }) {
+    async signIn() {
       // ✅ You don't need to handle credits here anymore
       return true;
     },
