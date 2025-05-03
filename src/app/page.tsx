@@ -124,13 +124,13 @@ export default function Home() {
   
       // Create a form
       const form = document.createElement("form");
-      form.action = process.env.RAZORPAY_SRC as string;
+      form.action = process.env.NEXT_RAZORPAY_SRC as string;
       form.method = "post";
   
       // Create script tag inside the form
       const script = document.createElement("script");
-      script.src = process.env.RAZORPAY_SRC as string;
-      script.setAttribute("data-payment_button_id", process.env.RAZORPAY_BUTTON_ID as string);
+      script.src = process.env.NEXT_RAZORPAY_SRC as string;
+      script.setAttribute("data-payment_button_id", process.env.NEXT_RAZORPAY_BUTTON_ID as string);
       script.async = true;
   
       form.appendChild(script);
