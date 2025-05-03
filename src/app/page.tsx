@@ -74,6 +74,7 @@ export default function Home() {
         video_id: videoId,
         email: session?.user.email
       });
+      console.log(process.env.COMMENTS_URL as string)
 
       toast.dismiss();
 
