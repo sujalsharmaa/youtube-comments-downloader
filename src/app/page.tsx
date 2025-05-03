@@ -30,7 +30,7 @@ export default function Home() {
 
     const interval = setInterval(() => {
       setCountdown((prev) => {
-        if (prev <= 1) {
+        if (prev === null || prev <= 1) {
           clearInterval(interval);
           setDownloadReady(true);
           return 0;
