@@ -193,7 +193,7 @@ Resources:
           TABLE_NAME: !Ref MetadataTable
           TABLE_NAME_USERS: !Ref UsersTable
           BACKGROUND_FUNCTION_NAME: !Ref BackgroundProcessorFunction
-          YOUTUBE_API_KEY: AIzaSyAvRLJ6_m_AqPVMg84cULH-n0QhLjGeYrM
+          YOUTUBE_API_KEY: #insert_api_key_here
       Events:
         ApiTrigger:
           Type: Api
