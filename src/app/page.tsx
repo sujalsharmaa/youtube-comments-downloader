@@ -147,7 +147,7 @@ export default function Home() {
       {/* Navbar */}
       <nav className="flex justify-between items-center px-6 py-4 shadow bg-white">
         <h1 className="text-xl font-bold text-blue-600">YouTube Comments Downloader</h1>
-        {!isAuthenticated && <h2 className="bg-red-500 px-4 py-2 rounded-4xl">Sign in to Download =></h2>}
+        {!isAuthenticated && <h2 className="bg-red-500 px-4 py-2 rounded-4xl">Sign in to Download ➡️</h2>}
 
         {isAuthenticated ? (
           <div className="flex items-center gap-4">
